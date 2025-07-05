@@ -6,6 +6,16 @@ const dotenv = require("dotenv");
 const connectDB = require("./database");
 const NotFoundHandller = require("./middleware/notFoundHandler");
 const ErrorHandler = require("./middleware/errorHandler");
+const passport = require("passport");
+const path = require("path");
+const {
+  localStrategy,
+  jwtStrategy,
+  JwtStrategy,
+} = require("./middleware/passport.js");
+
+//import route
+const usersRouter = require("./api/User/User.router.js");
 
 //init
 dotenv.config();
@@ -16,8 +26,11 @@ const Port = process.env.PORT;
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+passport.use("local", localStrategy);
+passport.use("jwt", JwtStrategy);
 //Routes
-
+app.use("/api/users", usersRouter);
+app.use("/media", express.static(path.join(__dirname, "media")));
 //Handler
 app.use(NotFoundHandller);
 app.use(ErrorHandler);
