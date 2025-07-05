@@ -26,6 +26,11 @@ usersRouter.get("/me", authenticate, getMe); //Tested
 usersRouter.get("/all", authenticate, getAllUsers); //Tested
 usersRouter.put(
   "/update",
+  (req, res, next) => {
+    console.log("🔍 Incoming PUT /update");
+    console.log("Authorization Header:", req.headers.authorization);
+    next();
+  },
   authenticate,
   upload.fields([{ name: "ProfileImage", maxCount: 1 }]), //Tested
   updateUser

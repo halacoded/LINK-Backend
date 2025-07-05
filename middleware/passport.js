@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const LocalStrategy = require("passport-local").Strategy;
 const JWTStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const GitHubStrategy = require("passport-github").Strategy;
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -31,7 +33,7 @@ const localStrategy = new LocalStrategy(
   }
 );
 
-const JwtStrategy = new JWTStrategy(
+const jwtStrategy = new JWTStrategy(
   {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET,
@@ -43,9 +45,8 @@ const JwtStrategy = new JWTStrategy(
         return done(null, false, { message: "User not found" });
       }
 
-      const expiry = new Date(payload.exp * 1000 * 60 * 60 * 24);
-      const now = new Date();
-      if (now > expiry) {
+      const expiry = new Date(payload.exp * 1000);
+      if (new Date() > expiry) {
         return done(null, false, { message: "Token expired" });
       }
 
@@ -56,4 +57,60 @@ const JwtStrategy = new JWTStrategy(
   }
 );
 
-module.exports = { localStrategy, JwtStrategy };
+const googleStrategy = new GoogleStrategy(
+  {
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "/auth/google/callback",
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value;
+      let user = await User.findOne({ Email: email });
+
+      if (!user) {
+        user = await User.create({
+          Username: profile.displayName,
+          Email: email,
+          provider: "google",
+          isThirdParty: true,
+          profileComplete: false,
+        });
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error);
+    }
+  }
+);
+
+const githubStrategy = new GitHubStrategy(
+  {
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: "/auth/github/callback",
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value;
+      let user = await User.findOne({ Email: email });
+
+      if (!user) {
+        user = await User.create({
+          Username: profile.username,
+          Email: email || `${profile.username}@github.com`,
+          provider: "github",
+          isThirdParty: true,
+          profileComplete: false,
+        });
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error);
+    }
+  }
+);
+
+module.exports = { localStrategy, jwtStrategy, googleStrategy, githubStrategy };

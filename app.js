@@ -11,12 +11,13 @@ const path = require("path");
 const {
   localStrategy,
   jwtStrategy,
-  JwtStrategy,
+  googleStrategy,
+  githubStrategy,
 } = require("./middleware/passport.js");
 
 //import route
 const usersRouter = require("./api/User/User.router.js");
-
+const thirdpartyRouter = require("./api/third-party authentication/router.js");
 //init
 dotenv.config();
 const app = express();
@@ -27,10 +28,13 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 passport.use("local", localStrategy);
-passport.use("jwt", JwtStrategy);
+passport.use("jwt", jwtStrategy);
+passport.use("google", googleStrategy);
+passport.use("github", githubStrategy);
 //Routes
 app.use("/api/users", usersRouter);
 app.use("/media", express.static(path.join(__dirname, "media")));
+app.use("/auth", thirdpartyRouter);
 //Handler
 app.use(NotFoundHandller);
 app.use(ErrorHandler);

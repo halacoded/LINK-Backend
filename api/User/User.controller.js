@@ -73,11 +73,15 @@ exports.signup = async (req, res, next) => {
       Role,
       password: hashedPassword,
       ProfileImage: "", // Default profile image
+      provider: "local",
+      isThirdParty: false,
+      profileComplete: true,
     });
 
     await user.save();
     // Generate token for the new user
     const token = generateToken(user);
+
     res.status(201).json({ message: "User created successfully", token });
   } catch (err) {
     console.error("Signup error:", err);
@@ -157,7 +161,7 @@ exports.updateUser = async (req, res, next) => {
     console.log("Received files:", req.files);
     console.log("Received body:", req.body);
 
-    const userId = req.user._id; // Get the user ID from the authenticated user
+    const userId = req.user._id;
     const { Username, Email, Company, Role } = req.body;
     const user = await User.findById(userId);
 
@@ -165,11 +169,10 @@ exports.updateUser = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Handle profile image upload
     if (req.files && req.files.ProfileImage) {
       user.ProfileImage = req.files.ProfileImage[0].path;
     }
-    // Handle username update
+
     if (Username && Username !== user.Username) {
       const existingUsername = await User.findOne({ Username });
       if (existingUsername) {
@@ -177,7 +180,7 @@ exports.updateUser = async (req, res, next) => {
       }
       user.Username = Username;
     }
-    // Handle email update
+
     if (Email && Email !== user.Email) {
       const existingEmail = await User.findOne({ Email });
       if (existingEmail) {
@@ -185,11 +188,15 @@ exports.updateUser = async (req, res, next) => {
       }
       user.Email = Email;
     }
-    // Update other fields
+
     if (Company) user.Company = Company;
     if (Role) user.Role = Role;
-    await user.save();
 
+    if (user.Company && user.Role && user.Username && user.Email) {
+      user.profileComplete = true;
+    }
+
+    await user.save();
     const updatedUser = await User.findById(userId).select("-password");
 
     res

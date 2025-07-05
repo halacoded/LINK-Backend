@@ -14,10 +14,13 @@ const UserSchema = new Schema(
   {
     Username: { type: String, required: true, unique: true },
     Email: { type: String, required: true, unique: true },
-    Company: { type: String, enum: allowedCompanies, required: true },
-    Role: { type: String, enum: allowedRoles, required: true },
-    password: { type: String, required: true },
+    Company: { type: String, enum: allowedCompanies },
+    Role: { type: String, enum: allowedRoles },
+    password: { type: String },
     ProfileImage: { type: String, default: "" },
+    provider: { type: String }, // google github local
+    isThirdParty: { type: Boolean, default: false },
+    profileComplete: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
