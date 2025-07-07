@@ -18,6 +18,7 @@ const {
 //import route
 const usersRouter = require("./api/User/User.router.js");
 const thirdpartyRouter = require("./api/third-party authentication/router.js");
+const flaskRoutes = require("./api/Microservice/flask.route");
 //init
 dotenv.config();
 const app = express();
@@ -35,6 +36,8 @@ passport.use("github", githubStrategy);
 app.use("/api/users", usersRouter);
 app.use("/media", express.static(path.join(__dirname, "media")));
 app.use("/auth", thirdpartyRouter);
+app.use("/api/flask", flaskRoutes);
+
 //Handler
 app.use(NotFoundHandller);
 app.use(ErrorHandler);
