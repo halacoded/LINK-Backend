@@ -16,7 +16,7 @@ exports.handleGoogleCallback = async (req, res) => {
       `http://localhost:3000/complete-profile?token=${token}`
     );
   }
-  res.redirect(`http://localhost:3000/profile?token=${token}`);
+  res.redirect(`http://localhost:3000/home?token=${token}`);
 };
 
 exports.handleGitHubCallback = async (req, res) => {
@@ -28,5 +28,5 @@ exports.handleGitHubCallback = async (req, res) => {
     );
   }
 
-  res.redirect(`http://localhost:3000/profile?token=${token}`);
+  res.redirect(`http://localhost:3000/home?token=${token}`);
 };
