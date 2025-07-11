@@ -28,6 +28,7 @@ const Port = process.env.PORT;
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(passport.initialize());
 passport.use("local", localStrategy);
 passport.use("jwt", jwtStrategy);
 passport.use("google", googleStrategy);

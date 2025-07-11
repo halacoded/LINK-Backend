@@ -7,6 +7,7 @@ const {
   getAllUsers,
   updateUser,
   getUserByUsername,
+  getCompanyUsers,
 } = require("./User.controller");
 const passport = require("passport");
 const upload = require("../../middleware/multer");
@@ -14,7 +15,11 @@ const upload = require("../../middleware/multer");
 const authenticate = passport.authenticate("jwt", { session: false });
 
 // Authentication routes
-usersRouter.post("/signup", signup); //Tested
+usersRouter.post(
+  "/signup",
+  upload.fields([{ name: "ProfileImage", maxCount: 1 }]),
+  signup
+); //Tested
 usersRouter.post(
   "/login",
   passport.authenticate("local", { session: false }), //Tested
@@ -27,7 +32,6 @@ usersRouter.get("/all", authenticate, getAllUsers); //Tested
 usersRouter.put(
   "/update",
   (req, res, next) => {
-    console.log("🔍 Incoming PUT /update");
     console.log("Authorization Header:", req.headers.authorization);
     next();
   },
@@ -35,5 +39,6 @@ usersRouter.put(
   upload.fields([{ name: "ProfileImage", maxCount: 1 }]), //Tested
   updateUser
 );
+usersRouter.get("/company-users", authenticate, getCompanyUsers);
 usersRouter.get("/:Username", authenticate, getUserByUsername); //Tested
 module.exports = usersRouter;

@@ -3,8 +3,7 @@ const { Schema, model } = mongoose;
 
 const PredictionSchema = new Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  rawData: [Schema.Types.Mixed], // original rows
-  predictions: [Number], // 0 or 1
+  enrichedData: [Schema.Types.Mixed], // full enriched prediction rows
   uploadedAt: { type: Date, default: Date.now },
 });
 

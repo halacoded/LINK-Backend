@@ -123,12 +123,17 @@ exports.getUserByUsername = async (req, res, next) => {
 
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
+    if (!req.user || !req.user._id) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No user found in req.user" });
+    }
 
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    console.log("User data fetched successfully:", user._id); // Log user data fetched
+
     res.status(200).json(user);
   } catch (error) {
     next(error);
@@ -145,7 +150,7 @@ exports.getAllUsers = async (req, res, next) => {
     }
 
     const users = await User.find(query).select(
-      "Username Company Role ProfileImage"
+      "_id Username Email Company Role ProfileImage"
     );
     res.status(200).json(users);
   } catch (error) {
@@ -207,5 +212,38 @@ exports.updateUser = async (req, res, next) => {
     res
       .status(500)
       .json({ message: "Error updating user", error: err.message });
+  }
+};
+
+exports.getCompanyUsers = async (req, res) => {
+  try {
+    // 1. Get the current user (from auth middleware)
+    const currentUser = req.user;
+
+    // 2. Check if user has a company
+    if (!currentUser.Company) {
+      return res.status(400).json({
+        success: false,
+        message: "User is not associated with a company",
+      });
+    }
+
+    // 3. Fetch users from the same company (excluding current user)
+    const companyUsers = await User.find({
+      Company: currentUser.Company,
+      _id: { $ne: currentUser._id }, // Optional: Exclude self
+    }).select("Username Email Role"); // Only return necessary fields
+
+    // 4. Return the list
+    res.status(200).json({
+      success: true,
+      count: companyUsers.length,
+      data: companyUsers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error: " + error.message,
+    });
   }
 };

@@ -19,39 +19,34 @@ exports.getPrediction = async (req, res) => {
 };
 
 exports.getBatchPrediction = async (req, res) => {
-  const userId = req.user?._id; // 🛡️ safely get user ID
+  const userId = req.user?._id;
   const filePath = req.file.path;
   const rawData = [];
-  const featuresArray = [];
 
   try {
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
         rawData.push(row);
-        featuresArray.push(Object.values(row).map(Number));
       })
       .on("end", async () => {
+        // Send raw structured data to Flask
         const flaskResponse = await axios.post(
           "http://localhost:5000/predict-batch",
           {
-            data: featuresArray,
+            data: rawData,
           }
         );
 
         fs.unlinkSync(filePath);
 
-        await Prediction.create({
-          userId, // ✅ now works without error
-          rawData,
-          predictions: flaskResponse.data.predictions,
-        });
+        const enriched = flaskResponse.data.predictions;
 
-        const enriched = rawData.map((row, i) => ({
-          ...row,
-          prediction: flaskResponse.data.predictions[i],
-          churn: flaskResponse.data.predictions[i] === 1 ? "Yes" : "No",
-        }));
+        await Prediction.create({
+          userId,
+          enrichedData: enriched,
+          uploadedAt: new Date(),
+        });
 
         res.status(200).json({ predictions: enriched });
       });
@@ -71,11 +66,7 @@ exports.getLatestUserPredictions = async (req, res) => {
       return res.status(200).json({ predictions: [] });
     }
 
-    const enriched = latest.rawData.map((row, index) => ({
-      ...row,
-      prediction: latest.predictions[index],
-      churn: latest.predictions[index] === 1 ? "Yes" : "No",
-    }));
+    const enriched = latest.enrichedData;
 
     res.status(200).json({ predictions: enriched });
   } catch (error) {
